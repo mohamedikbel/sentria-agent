@@ -4,17 +4,16 @@ import com.sentria.domain.Finding;
 import com.sentria.notification.FormattedNotification;
 import com.sentria.notification.NotificationFormatter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class AiNotificationFormatter implements NotificationFormatter {
 
-    private final ChatClient chatClient;
+    private final OpenAiCompatibleClient aiClient;
 
-    public AiNotificationFormatter(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
+    public AiNotificationFormatter(OpenAiCompatibleClient aiClient) {
+        this.aiClient = aiClient;
     }
 
     @Override
@@ -31,10 +30,7 @@ public class AiNotificationFormatter implements NotificationFormatter {
                 %s
                 """.formatted(finding);
 
-        String content = chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content();
+        String content = aiClient.complete(prompt).orElseGet(() -> "Alert: " + finding.type());
 
         return new FormattedNotification(
                 "Sentria Alert",

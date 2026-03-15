@@ -5,12 +5,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "storage")
 public record StorageProperties(
-        Smartctl smartctl
+        Smart smart
 ) {
-    public record Smartctl(
+    public record Smart(
             boolean enabled,
-            String command,
-            String device
+            String binaryPath,
+            boolean discoveryEnabled,
+            boolean preferSmartctl
     ) {
     }
 }

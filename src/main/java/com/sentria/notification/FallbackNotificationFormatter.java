@@ -3,6 +3,11 @@ package com.sentria.notification;
 import com.sentria.domain.Finding;
 import org.springframework.stereotype.Component;
 
+/**
+ * Pure rule-based {@link NotificationFormatter}.
+ * Does not call any external service, so it is always available as a last resort.
+ * Title, body sections, and ntfy priority are derived directly from the finding data.
+ */
 @Component
 public class FallbackNotificationFormatter implements NotificationFormatter {
 
@@ -15,6 +20,7 @@ public class FallbackNotificationFormatter implements NotificationFormatter {
         return new FormattedNotification(title, body, priority);
     }
 
+    /** Maps the finding type to a short, human-readable title. */
     private String buildTitle(Finding finding) {
         return switch (finding.type()) {
             case "BATTERY_FULLY_CHARGED" -> "Battery fully charged";
@@ -24,6 +30,10 @@ public class FallbackNotificationFormatter implements NotificationFormatter {
         };
     }
 
+    /**
+     * Builds the notification body with four sections:
+     * "What happened", "Likely contributor" (if present), "Confidence", and "Recommended".
+     */
     private String buildBody(Finding finding) {
         StringBuilder body = new StringBuilder();
 
@@ -48,6 +58,7 @@ public class FallbackNotificationFormatter implements NotificationFormatter {
         return body.toString().trim();
     }
 
+    /** Translates severity to the ntfy priority string expected by the sender. */
     private String mapPriority(Finding finding) {
         return switch (finding.severity()) {
             case LOW -> "low";
@@ -56,6 +67,7 @@ public class FallbackNotificationFormatter implements NotificationFormatter {
         };
     }
 
+    /** Capitalises only the first letter (e.g. "HIGH" → "High"). */
     private String pretty(String value) {
         return value.substring(0, 1) + value.substring(1).toLowerCase();
     }

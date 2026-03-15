@@ -1,5 +1,6 @@
 package com.sentria.notification;
 
+import com.sentria.application.port.NotificationSender;
 import com.sentria.config.NotificationProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,14 +12,25 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Sends notifications to a <a href="https://ntfy.sh">ntfy</a> server via HTTP POST.
+ *
+ * <p>The ntfy topic, server URL, and enabled flag are read from
+ * {@link NotificationProperties}. When ntfy is disabled, the call is a no-op.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NtfySender {
+public class NtfySender implements NotificationSender {
 
     private final HttpClient httpClient;
     private final NotificationProperties notificationProperties;
 
+    /**
+     * Posts the notification body to {@code <serverUrl>/<topic>}.
+     * The {@code Title} and {@code Priority} headers are set from the notification fields.
+     */
+    @Override
     public void send(FormattedNotification notification) {
         NotificationProperties.Ntfy ntfy = notificationProperties.ntfy();
 

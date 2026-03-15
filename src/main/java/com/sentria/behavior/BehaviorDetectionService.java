@@ -1,15 +1,12 @@
 package com.sentria.behavior;
 
-
 import com.sentria.domain.BehaviorSession;
 import com.sentria.domain.BehaviorSessionType;
-import com.sentria.repository.BehaviorSessionRepository;
+import com.sentria.application.behavior.RunningProcessProvider;
+import com.sentria.application.port.BehaviorSessionStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.DependsOn;
-import oshi.SystemInfo;
-import oshi.software.os.OSProcess;
-import oshi.software.os.OperatingSystem;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -17,14 +14,22 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+/**
+ * Detects high-level user behaviors (video editing, gaming) by inspecting the
+ * list of currently running processes.
+ *
+ * <p>On each tick the service compares the live process list against known
+ * process-name sets. It opens a new {@link BehaviorSession} when a behavior starts
+ * and closes the existing session when the triggering process disappears.
+ */
 @Slf4j
 @Service
 @DependsOn("flyway")
 @RequiredArgsConstructor
 public class BehaviorDetectionService {
 
+    /** Process names that indicate active video-editing work. */
     private static final Set<String> VIDEO_EDITING_PROCESSES = Set.of(
             "premiere.exe",
             "adobe media encoder.exe",
@@ -32,26 +37,20 @@ public class BehaviorDetectionService {
             "afterfx.exe"
     );
 
+    /** Process names that indicate active gaming. */
     private static final Set<String> GAMING_PROCESSES = Set.of(
             "steam.exe",
             "epicgameslauncher.exe",
             "battle.net.exe"
     );
 
-    private final BehaviorSessionRepository behaviorSessionRepository;
+    private final BehaviorSessionStore behaviorSessionRepository;
+    private final RunningProcessProvider runningProcessProvider;
 
-    private final SystemInfo systemInfo = new SystemInfo();
-
-    @Scheduled(
-            fixedRateString = "${monitoring.interval-seconds}000")
+    /** Scheduled detection pass – runs on the global monitoring interval. */
+    @Scheduled(fixedRateString = "${monitoring.interval-seconds}000")
     public void detectBehaviors() {
-        OperatingSystem os = systemInfo.getOperatingSystem();
-
-        List<String> processNames = os.getProcesses().stream()
-                .map(OSProcess::getName)
-                .filter(name -> name != null && !name.isBlank())
-                .map(String::toLowerCase)
-                .collect(Collectors.toList());
+        List<String> processNames = runningProcessProvider.getNormalizedProcessNames();
 
         boolean videoEditingDetected = processNames.stream().anyMatch(VIDEO_EDITING_PROCESSES::contains);
         boolean gamingDetected = processNames.stream().anyMatch(GAMING_PROCESSES::contains);
@@ -69,6 +68,10 @@ public class BehaviorDetectionService {
         );
     }
 
+    /**
+     * Opens a new session if the behavior is detected and no session is open,
+     * or closes the open session if the behavior is no longer detected.
+     */
     private void handleSession(BehaviorSessionType type, boolean detected, String context) {
         BehaviorSession openSession = behaviorSessionRepository.findOpenSessionByType(type);
 
@@ -93,6 +96,7 @@ public class BehaviorDetectionService {
         }
     }
 
+    /** Returns the first process name that matches any of the given candidates, or null. */
     private String firstMatchingProcess(List<String> processNames, Set<String> candidates) {
         return processNames.stream()
                 .filter(candidates::contains)

@@ -5,8 +5,8 @@ import com.sentria.domain.BehaviorSession;
 import com.sentria.domain.BehaviorSessionType;
 import com.sentria.domain.MetricSnapshot;
 import com.sentria.domain.MetricType;
-import com.sentria.repository.BehaviorSessionRepository;
-import com.sentria.repository.MetricSnapshotRepository;
+import com.sentria.application.port.BehaviorSessionStore;
+import com.sentria.application.port.MetricSnapshotStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.DependsOn;
@@ -23,8 +23,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DiskActivityService {
 
-    private final MetricSnapshotRepository metricRepository;
-    private final BehaviorSessionRepository behaviorRepository;
+    private final MetricSnapshotStore metricRepository;
+    private final BehaviorSessionStore behaviorRepository;
 
     private static final double HEAVY_WRITE_THRESHOLD_GB = 5.0;
 

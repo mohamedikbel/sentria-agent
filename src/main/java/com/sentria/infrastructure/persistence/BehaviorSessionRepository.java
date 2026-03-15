@@ -1,5 +1,6 @@
-package com.sentria.repository;
+package com.sentria.infrastructure.persistence;
 
+import com.sentria.application.port.BehaviorSessionStore;
 import com.sentria.domain.BehaviorSession;
 import com.sentria.domain.BehaviorSessionType;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +12,11 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class BehaviorSessionRepository {
+public class BehaviorSessionRepository implements BehaviorSessionStore {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Override
     public void save(BehaviorSession session) {
         String sql = """
                 INSERT INTO behavior_session (
@@ -38,6 +40,7 @@ public class BehaviorSessionRepository {
         );
     }
 
+    @Override
     public BehaviorSession findOpenSessionByType(BehaviorSessionType type) {
         String sql = """
                 SELECT id, device_id, session_type, started_at, ended_at, context
@@ -64,6 +67,7 @@ public class BehaviorSessionRepository {
         return results.isEmpty() ? null : results.get(0);
     }
 
+    @Override
     public void closeSession(String sessionId, Instant endedAt) {
         String sql = """
                 UPDATE behavior_session
@@ -74,6 +78,7 @@ public class BehaviorSessionRepository {
         jdbcTemplate.update(sql, endedAt.toString(), sessionId);
     }
 
+    @Override
     public List<BehaviorSession> findSessionsByTypeSince(BehaviorSessionType type, Instant since) {
         String sql = """
             SELECT id, device_id, session_type, started_at, ended_at, context
@@ -98,6 +103,7 @@ public class BehaviorSessionRepository {
         );
     }
 
+    @Override
     public List<BehaviorSession> findSessionsSince(Instant since) {
         String sql = """
             SELECT id, device_id, session_type, started_at, ended_at, context

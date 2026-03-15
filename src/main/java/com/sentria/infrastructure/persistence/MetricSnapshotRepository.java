@@ -1,5 +1,6 @@
-package com.sentria.repository;
+package com.sentria.infrastructure.persistence;
 
+import com.sentria.application.port.MetricSnapshotStore;
 import com.sentria.domain.MetricSnapshot;
 import com.sentria.domain.MetricType;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +12,11 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class MetricSnapshotRepository {
+public class MetricSnapshotRepository implements MetricSnapshotStore {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Override
     public void save(MetricSnapshot snapshot) {
         String sql = """
                 INSERT INTO metric_snapshot (
@@ -34,6 +36,7 @@ public class MetricSnapshotRepository {
         );
     }
 
+    @Override
     public MetricSnapshot findLatestByType(MetricType metricType) {
         String sql = """
                 SELECT device_id, metric_type, metric_value, captured_at
@@ -57,6 +60,7 @@ public class MetricSnapshotRepository {
         return results.isEmpty() ? null : results.get(0);
     }
 
+    @Override
     public List<MetricSnapshot> findByTypeSince(MetricType type, Instant since) {
 
         String sql = """
@@ -80,6 +84,7 @@ public class MetricSnapshotRepository {
         );
     }
 
+    @Override
     public List<MetricSnapshot> findRecentSnapshots(MetricType type, int limit) {
 
         String sql = """

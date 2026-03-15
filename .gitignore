@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Runtime logs & temp data ###
+*.log
+identifier.sqlite
+data/
+
