@@ -42,3 +42,8 @@ data/
 ### Dev scripts ###
 write_tests.py
 
+### User-specific runtime config ###
+config/
+
+### Internal docs (not for public repo) ###
+ARCHITECTURE.md

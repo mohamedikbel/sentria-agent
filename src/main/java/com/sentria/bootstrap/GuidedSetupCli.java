@@ -258,7 +258,7 @@ public final class GuidedSetupCli {
             String currentDir = Path.of(".").toAbsolutePath().normalize().toString();
             String content = "@echo off\r\n"
                     + "cd /d \"" + currentDir + "\"\r\n"
-                    + "start \"Sentria Agent\" java -jar sentria-agent-0.0.1-SNAPSHOT.jar\r\n";
+                    + "start \"Sentria Agent\" java -jar sentria-agent-1.0.0.jar\r\n";
 
             Files.writeString(script, content, StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -426,7 +426,7 @@ public final class GuidedSetupCli {
         System.out.println("   - MCP docs: https://modelcontextprotocol.io");
         System.out.println();
         System.out.println("5) Start command");
-        System.out.println("   - java -jar target/sentria-agent-0.0.1-SNAPSHOT.jar");
+        System.out.println("   - java -jar target/sentria-agent-1.0.0.jar");
         System.out.println("========================================================");
     }
 
@@ -527,6 +527,8 @@ public final class GuidedSetupCli {
         return models.get(choice - 1);
     }
 }
+
+
 
 
 

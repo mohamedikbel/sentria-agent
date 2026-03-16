@@ -309,11 +309,28 @@ Each finding is sent as a push notification exactly once per configurable dedupl
 
 ---
 
-## 🗄️ Data Storage
+## 🗄️ Data Storage — SQLite, Zero Config Required
 
-- **Database:** SQLite at `~/sentria.db` (override with `SENTRIA_DB_PATH` env var)
-- **Migrations:** Flyway manages schema migrations automatically on startup
-- **Retention:** Data older than `monitoring.retention-days` (default: 30) is deleted automatically every 24 hours
+Sentria uses **SQLite** as its embedded database engine. No server to install, no credentials to manage — the database is a single file on your machine.
+
+### Why SQLite?
+
+| Advantage | Details |
+|---|---|
+| 🔧 **Zero setup** | No database server, no service to start — just a `.db` file |
+| 📦 **Fully embedded** | SQLite ships inside the JAR via `sqlite-jdbc`, nothing extra to install |
+| 💾 **Tiny footprint** | The database file stays small (typically a few MB for 30 days of metrics) |
+| 🔒 **Local & private** | All your hardware data stays on your machine, never sent anywhere |
+| 🚀 **Fast for this workload** | Time-series inserts + small aggregation queries — SQLite handles this perfectly |
+| 🔁 **Portable** | Copy/move `sentria.db` to another machine and your full history comes with it |
+| 🛠️ **Inspectable** | Open the file with any SQLite browser (e.g. [DB Browser for SQLite](https://sqlitebrowser.org/)) to query your metrics manually |
+
+### Storage Details
+
+- **Location:** `~/sentria.db` by default — override with the `SENTRIA_DB_PATH` environment variable
+- **Schema migrations:** Managed automatically by **Flyway** on every startup — upgrading Sentria never requires manual SQL
+- **Automatic retention:** Metrics older than `monitoring.retention-days` (default: **30 days**) are purged every 24 hours, keeping the file compact
+- **Test isolation:** Integration tests use a separate `target/sentria-test.db` that is never mixed with your real data
 
 ---
 
@@ -403,6 +420,7 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 > **Sentria** — _Know your machine before it fails._
+
 
 
 
