@@ -25,6 +25,8 @@ import java.util.List;
 // Hardware collector plugin: returns snapshots only; orchestration/persistence is centralized.
 public class HardwareCollectorService implements MetricCollectorPlugin {
 
+    private static final String DEVICE_ID = "local-device";
+
     private final SystemInfo systemInfo = new SystemInfo();
 
     private long[] previousCpuTicks;
@@ -66,7 +68,7 @@ public class HardwareCollectorService implements MetricCollectorPlugin {
         previousCpuTicks = cpu.getSystemCpuLoadTicks();
 
         MetricSnapshot snapshot = new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.CPU_USAGE_PERCENT,
                 cpuLoad,
                 collectedAt
@@ -82,7 +84,7 @@ public class HardwareCollectorService implements MetricCollectorPlugin {
                 ((double) (memory.getTotal() - memory.getAvailable()) / memory.getTotal()) * 100.0;
 
         MetricSnapshot snapshot = new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.RAM_USAGE_PERCENT,
                 usedPercent,
                 collectedAt
@@ -98,7 +100,7 @@ public class HardwareCollectorService implements MetricCollectorPlugin {
         }
 
         MetricSnapshot snapshot = new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.CPU_TEMPERATURE_C,
                 cpuTemperature,
                 collectedAt
@@ -121,7 +123,7 @@ public class HardwareCollectorService implements MetricCollectorPlugin {
         double charging = battery.isCharging() ? 1.0 : 0.0;
 
         MetricSnapshot batterySnapshot = new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.BATTERY_PERCENT,
                 batteryPercent,
                 collectedAt
@@ -129,7 +131,7 @@ public class HardwareCollectorService implements MetricCollectorPlugin {
         snapshots.add(batterySnapshot);
 
         MetricSnapshot chargingSnapshot = new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.BATTERY_CHARGING,
                 charging,
                 collectedAt
@@ -141,7 +143,7 @@ public class HardwareCollectorService implements MetricCollectorPlugin {
                 : -1.0;
         if (remainingMinutes > 0.0) {
             MetricSnapshot remainingSnapshot = new MetricSnapshot(
-                    "local-device",
+                    DEVICE_ID,
                     MetricType.BATTERY_TIME_REMAINING_MIN,
                     remainingMinutes,
                     collectedAt
@@ -197,14 +199,14 @@ public class HardwareCollectorService implements MetricCollectorPlugin {
         double freeGb = usable / 1_000_000_000.0;
 
         snapshots.add(new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.STORAGE_USED_PERCENT,
                 Math.max(0.0, Math.min(100.0, usedPercent)),
                 collectedAt
         ));
 
         snapshots.add(new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.STORAGE_FREE_GB,
                 Math.max(0.0, freeGb),
                 collectedAt
@@ -237,19 +239,26 @@ public class HardwareCollectorService implements MetricCollectorPlugin {
         previousNetTxBytes = totalTx;
 
         snapshots.add(new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.NETWORK_DOWNLOAD_MBPS,
                 downMbps,
                 collectedAt
         ));
 
         snapshots.add(new MetricSnapshot(
-                "local-device",
+                DEVICE_ID,
                 MetricType.NETWORK_UPLOAD_MBPS,
                 upMbps,
                 collectedAt
         ));
     }
 }
+
+
+
+
+
+
+
 
 

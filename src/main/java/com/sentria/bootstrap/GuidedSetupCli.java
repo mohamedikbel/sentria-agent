@@ -20,6 +20,13 @@ import java.util.Scanner;
 
 public final class GuidedSetupCli {
 
+    private static final String PROVIDER_OPENAI     = "openai";
+    private static final String PROVIDER_OPENROUTER = "openrouter";
+    private static final String PROVIDER_GROQ       = "groq";
+    private static final String PROVIDER_CUSTOM     = "custom";
+    private static final String DEFAULT_MODEL       = "gpt-4o-mini";
+    private static final String BASE_URL_OPENAI     = "https://api.openai.com/v1";
+
     private GuidedSetupCli() {
     }
 
@@ -64,8 +71,8 @@ public final class GuidedSetupCli {
                 "Enable AI formatting (if no = static templates only)? (y/n)",
                 true);
 
-        String aiProvider = "openai";
-        String aiModel = "gpt-4o-mini";
+        String aiProvider = PROVIDER_OPENAI;
+        String aiModel = DEFAULT_MODEL;
         String openaiKey = "";
         String openrouterKey = "";
         String groqKey = "";
@@ -75,16 +82,16 @@ public final class GuidedSetupCli {
         if (aiEnabled) {
             aiProvider = askChoice(scanner,
                     "AI provider",
-                    List.of("openai", "openrouter", "groq", "custom"),
-                    "openai");
+                    List.of(PROVIDER_OPENAI, PROVIDER_OPENROUTER, PROVIDER_GROQ, PROVIDER_CUSTOM),
+                    PROVIDER_OPENAI);
 
             aiModel = askAiModelByNumber(scanner, aiProvider);
 
             switch (aiProvider) {
-                case "openrouter" -> openrouterKey = ask(scanner, "OpenRouter API key", "");
-                case "groq" -> groqKey = ask(scanner, "Groq API key", "");
-                case "custom" -> {
-                    customBaseUrl = ask(scanner, "Custom OpenAI-compatible base URL", "https://api.openai.com/v1");
+                case PROVIDER_OPENROUTER -> openrouterKey = ask(scanner, "OpenRouter API key", "");
+                case PROVIDER_GROQ -> groqKey = ask(scanner, "Groq API key", "");
+                case PROVIDER_CUSTOM -> {
+                    customBaseUrl = ask(scanner, "Custom OpenAI-compatible base URL", BASE_URL_OPENAI);
                     customKey = ask(scanner, "Custom API key", "");
                 }
                 default -> openaiKey = ask(scanner, "OpenAI API key", "");
@@ -95,9 +102,9 @@ public final class GuidedSetupCli {
                     true);
             if (testNow) {
                 String effectiveKey = switch (aiProvider) {
-                    case "openrouter" -> openrouterKey;
-                    case "groq" -> groqKey;
-                    case "custom" -> customKey;
+                    case PROVIDER_OPENROUTER -> openrouterKey;
+                    case PROVIDER_GROQ -> groqKey;
+                    case PROVIDER_CUSTOM -> customKey;
                     default -> openaiKey;
                 };
                 String effectiveBaseUrl = providerBaseUrl(aiProvider, customBaseUrl);
@@ -315,8 +322,7 @@ public final class GuidedSetupCli {
 
         System.out.println("Available monitoring collectors:");
         for (int i = 0; i < keys.size(); i++) {
-            String key = keys.get(i);
-            System.out.println("  " + (i + 1) + ") " + key + " - " + availableCollectors.get(key));
+            System.out.println("  " + (i + 1) + ") " + keys.get(i) + " - " + availableCollectors.get(keys.get(i)));
         }
         System.out.println("Type 'all' for all collectors, or indexes like: 1,2");
         System.out.println("Example: choose only SSD with '2', or only hardware with '1'.");
@@ -326,38 +332,40 @@ public final class GuidedSetupCli {
             if (value.equals("all")) {
                 return keys;
             }
-
-            String[] tokens = value.split(",");
-            List<String> result = new ArrayList<>();
-            boolean valid = true;
-            for (String token : tokens) {
-                String trimmed = token.trim();
-                if (trimmed.isBlank()) {
-                    continue;
-                }
-
-                try {
-                    int index = Integer.parseInt(trimmed);
-                    if (index < 1 || index > keys.size()) {
-                        valid = false;
-                        break;
-                    }
-                    String collector = keys.get(index - 1);
-                    if (!result.contains(collector)) {
-                        result.add(collector);
-                    }
-                } catch (NumberFormatException e) {
-                    valid = false;
-                    break;
-                }
-            }
-
-            if (valid && !result.isEmpty()) {
+            List<String> result = parseCollectorTokens(value, keys);
+            if (result != null) {
                 return result;
             }
-
             System.out.println("Invalid collector selection. Example: all OR 1 OR 1,2");
         }
+    }
+
+    /**
+     * Parses a comma-separated list of 1-based collector indexes (e.g. "1,2") into
+     * the corresponding collector names. Returns {@code null} if the input is invalid.
+     */
+    private static List<String> parseCollectorTokens(String value, List<String> keys) {
+        String[] tokens = value.split(",");
+        List<String> result = new ArrayList<>();
+        for (String token : tokens) {
+            String trimmed = token.trim();
+            if (trimmed.isBlank()) {
+                continue;
+            }
+            try {
+                int index = Integer.parseInt(trimmed);
+                if (index < 1 || index > keys.size()) {
+                    return null;
+                }
+                String collector = keys.get(index - 1);
+                if (!result.contains(collector)) {
+                    result.add(collector);
+                }
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return result.isEmpty() ? null : result;
     }
 
     private static int askChoiceInt(Scanner scanner, String label, List<Integer> choices, int defaultValue) {
@@ -373,10 +381,10 @@ public final class GuidedSetupCli {
 
     private static String defaultModel(String provider) {
         return switch (provider) {
-            case "openrouter" -> "openai/gpt-4o-mini";
-            case "groq" -> "llama-3.1-8b-instant";
-            case "custom" -> "gpt-4o-mini";
-            default -> "gpt-4o-mini";
+            case PROVIDER_OPENROUTER -> "openai/gpt-4o-mini";
+            case PROVIDER_GROQ -> "llama-3.1-8b-instant";
+            case PROVIDER_CUSTOM -> DEFAULT_MODEL;
+            default -> DEFAULT_MODEL;
         };
     }
 
@@ -424,10 +432,10 @@ public final class GuidedSetupCli {
 
     private static String providerBaseUrl(String provider, String customBaseUrl) {
         return switch (provider) {
-            case "openrouter" -> "https://openrouter.ai/api/v1";
-            case "groq" -> "https://api.groq.com/openai/v1";
-            case "custom" -> (customBaseUrl == null || customBaseUrl.isBlank()) ? "https://api.openai.com/v1" : customBaseUrl.trim();
-            default -> "https://api.openai.com/v1";
+            case PROVIDER_OPENROUTER -> "https://openrouter.ai/api/v1";
+            case PROVIDER_GROQ -> "https://api.groq.com/openai/v1";
+            case PROVIDER_CUSTOM -> (customBaseUrl == null || customBaseUrl.isBlank()) ? BASE_URL_OPENAI : customBaseUrl.trim();
+            default -> BASE_URL_OPENAI;
         };
     }
 
@@ -467,7 +475,7 @@ public final class GuidedSetupCli {
 
     private static String normalizeBaseUrl(String baseUrl) {
         if (baseUrl == null || baseUrl.isBlank()) {
-            return "https://api.openai.com/v1";
+            return BASE_URL_OPENAI;
         }
 
         String trimmed = baseUrl.trim();
@@ -482,19 +490,19 @@ public final class GuidedSetupCli {
 
     private static String askAiModelByNumber(Scanner scanner, String provider) {
         List<String> models = switch (provider) {
-            case "openrouter" -> List.of(
+            case PROVIDER_OPENROUTER -> List.of(
                     "openai/gpt-4o-mini",
                     "openai/gpt-4.1-mini",
                     "anthropic/claude-3.5-sonnet"
             );
-            case "groq" -> List.of(
+            case PROVIDER_GROQ -> List.of(
                     "llama-3.1-8b-instant",
                     "llama-3.3-70b-versatile",
                     "mixtral-8x7b-32768"
             );
-            case "custom" -> List.of(defaultModel(provider));
+            case PROVIDER_CUSTOM -> List.of(defaultModel(provider));
             default -> List.of(
-                    "gpt-4o-mini",
+                    DEFAULT_MODEL,
                     "gpt-4.1-mini",
                     "gpt-4.1"
             );
@@ -519,6 +527,14 @@ public final class GuidedSetupCli {
         return models.get(choice - 1);
     }
 }
+
+
+
+
+
+
+
+
 
 
 

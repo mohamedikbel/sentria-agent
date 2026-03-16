@@ -14,6 +14,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MetricSnapshotRepository implements MetricSnapshotStore {
 
+    private static final String COL_DEVICE_ID   = "device_id";
+    private static final String COL_METRIC_TYPE  = "metric_type";
+    private static final String COL_METRIC_VALUE = "metric_value";
+    private static final String COL_CAPTURED_AT  = "captured_at";
+
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -49,10 +54,10 @@ public class MetricSnapshotRepository implements MetricSnapshotStore {
         List<MetricSnapshot> results = jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new MetricSnapshot(
-                        rs.getString("device_id"),
-                        MetricType.valueOf(rs.getString("metric_type")),
-                        rs.getDouble("metric_value"),
-                        Instant.parse(rs.getString("captured_at"))
+                        rs.getString(COL_DEVICE_ID),
+                        MetricType.valueOf(rs.getString(COL_METRIC_TYPE)),
+                        rs.getDouble(COL_METRIC_VALUE),
+                        Instant.parse(rs.getString(COL_CAPTURED_AT))
                 ),
                 metricType.name()
         );
@@ -74,10 +79,10 @@ public class MetricSnapshotRepository implements MetricSnapshotStore {
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new MetricSnapshot(
-                        rs.getString("device_id"),
-                        MetricType.valueOf(rs.getString("metric_type")),
-                        rs.getDouble("metric_value"),
-                        Instant.parse(rs.getString("captured_at"))
+                        rs.getString(COL_DEVICE_ID),
+                        MetricType.valueOf(rs.getString(COL_METRIC_TYPE)),
+                        rs.getDouble(COL_METRIC_VALUE),
+                        Instant.parse(rs.getString(COL_CAPTURED_AT))
                 ),
                 type.name(),
                 since.toString()
@@ -98,10 +103,10 @@ public class MetricSnapshotRepository implements MetricSnapshotStore {
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new MetricSnapshot(
-                        rs.getString("device_id"),
-                        MetricType.valueOf(rs.getString("metric_type")),
-                        rs.getDouble("metric_value"),
-                        Instant.parse(rs.getString("captured_at"))
+                        rs.getString(COL_DEVICE_ID),
+                        MetricType.valueOf(rs.getString(COL_METRIC_TYPE)),
+                        rs.getDouble(COL_METRIC_VALUE),
+                        Instant.parse(rs.getString(COL_CAPTURED_AT))
                 ),
                 type.name(),
                 limit

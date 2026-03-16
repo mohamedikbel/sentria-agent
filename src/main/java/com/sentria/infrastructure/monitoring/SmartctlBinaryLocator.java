@@ -16,6 +16,9 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class SmartctlBinaryLocator {
 
+    private static final String SMARTCTL_BINARY_WINDOWS = "smartctl.exe";
+    private static final String SMARTCTL_BINARY_UNIX    = "smartctl";
+
     private final StorageProperties storageProperties;
 
     public Optional<String> findCommand() {
@@ -50,7 +53,7 @@ public class SmartctlBinaryLocator {
 
     private Optional<String> probePathCommand() {
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-        String command = os.contains("win") ? "smartctl.exe" : "smartctl";
+        String command = os.contains("win") ? SMARTCTL_BINARY_WINDOWS : SMARTCTL_BINARY_UNIX;
 
         try {
             Process process = new ProcessBuilder(command, "--version")
@@ -74,28 +77,25 @@ public class SmartctlBinaryLocator {
         List<Path> candidates = new ArrayList<>();
 
         if (os.contains("win")) {
-            candidates.add(Path.of("smartctl.exe"));
-            candidates.add(Path.of("bin", "smartctl.exe"));
-            candidates.add(Path.of("tools", "smartmontools", "bin", "smartctl.exe"));
-            candidates.add(Path.of("C:\\Program Files\\smartmontools\\bin\\smartctl.exe"));
+            candidates.add(Path.of(SMARTCTL_BINARY_WINDOWS));
+            candidates.add(Path.of("bin", SMARTCTL_BINARY_WINDOWS));
+            candidates.add(Path.of("tools", "smartmontools", "bin", SMARTCTL_BINARY_WINDOWS));
+            candidates.add(Path.of("C:\\Program Files\\smartmontools\\bin\\" + SMARTCTL_BINARY_WINDOWS));
             return candidates;
         }
 
         if (os.contains("mac")) {
-            candidates.add(Path.of("smartctl"));
-            candidates.add(Path.of("/opt/homebrew/sbin/smartctl"));
-            candidates.add(Path.of("/usr/local/sbin/smartctl"));
-            candidates.add(Path.of("/usr/sbin/smartctl"));
+            candidates.add(Path.of(SMARTCTL_BINARY_UNIX));
+            candidates.add(Path.of("/opt/homebrew/sbin/" + SMARTCTL_BINARY_UNIX));
+            candidates.add(Path.of("/usr/local/sbin/" + SMARTCTL_BINARY_UNIX));
+            candidates.add(Path.of("/usr/sbin/" + SMARTCTL_BINARY_UNIX));
             return candidates;
         }
 
-        candidates.add(Path.of("smartctl"));
-        candidates.add(Path.of("/usr/sbin/smartctl"));
-        candidates.add(Path.of("/usr/bin/smartctl"));
-        candidates.add(Path.of("/sbin/smartctl"));
+        candidates.add(Path.of(SMARTCTL_BINARY_UNIX));
+        candidates.add(Path.of("/usr/sbin/" + SMARTCTL_BINARY_UNIX));
+        candidates.add(Path.of("/usr/bin/" + SMARTCTL_BINARY_UNIX));
+        candidates.add(Path.of("/sbin/" + SMARTCTL_BINARY_UNIX));
         return candidates;
     }
 }
-
-
-

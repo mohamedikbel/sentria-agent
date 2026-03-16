@@ -132,10 +132,16 @@ public class PeriodicMetricVerdictService {
             signals.add("Battery autonomy often low");
         }
 
-        String verdict = riskScore >= 3 ? "watch_closely" : (riskScore >= 1 ? "attention" : "stable");
+        String verdict = verdictFromRiskScore(riskScore);
 
         return new WindowVerdict(days, verdict, riskScore, cpu, cpuTemp, ram, battery, batteryRemaining,
                 ssdHealth, ssdWrites, storageUsed, storageFree, netDown, netUp, signals);
+    }
+
+    private String verdictFromRiskScore(int riskScore) {
+        if (riskScore >= 3) return "watch_closely";
+        if (riskScore >= 1) return "attention";
+        return "stable";
     }
 
     private MetricStats metricStats(MetricType type, Instant since) {
@@ -222,38 +228,7 @@ public class PeriodicMetricVerdictService {
         lines.add("");
 
         lines.add("Key Trends:");
-        lines.add("- CPU Usage: latest " + format(w.cpu().latest()) + "%, average " + format(w.cpu().avg()) + "%");
-        if (w.cpuTemp().present()) {
-            lines.add("- CPU Temperature: latest " + format(w.cpuTemp().latest()) + " C");
-        }
-        lines.add("- RAM Usage: latest " + format(w.ram().latest()) + "%, average " + format(w.ram().avg()) + "%");
-        if (w.battery().present()) {
-            lines.add("- Battery Level: latest " + format(w.battery().latest()) + "%");
-        }
-        if (w.batteryRemaining().present()) {
-            lines.add("- Battery Time Remaining: " + format(w.batteryRemaining().latest()) + " min");
-        }
-        if (w.ssdHealth().present()) {
-            lines.add("- SSD Health: latest " + format(w.ssdHealth().latest()) + "%");
-        }
-        if (w.ssdWrites().present()) {
-            lines.add("- SSD Data Written (Total): +" + format(w.ssdWrites().delta()) + " GB over period");
-        }
-        if (w.storageFree().present()) {
-            lines.add("- Storage Free Space: " + format(w.storageFree().latest()) + " GB");
-        }
-        if (w.storageUsed().present()) {
-            lines.add("- Storage Usage: " + format(w.storageUsed().latest()) + "%");
-        }
-        if (w.netDown().present() || w.netUp().present()) {
-            lines.add("- Network Traffic: download avg " + format(w.netDown().avg())
-                    + " MB/s, upload avg " + format(w.netUp().avg()) + " MB/s");
-        }
-        if (w.signals().isEmpty()) {
-            lines.add("- Signals: no major long-term alert detected.");
-        } else {
-            lines.add("- Signals: " + String.join(", ", w.signals()));
-        }
+        lines.addAll(buildKeyTrendsLines(w));
         lines.add("");
 
         lines.add("Most Used Applications:");
@@ -286,16 +261,75 @@ public class PeriodicMetricVerdictService {
         return String.join("\n", lines);
     }
 
+    private List<String> buildKeyTrendsLines(WindowVerdict w) {
+        List<String> lines = new ArrayList<>();
+        lines.add("- CPU Usage: latest " + format(w.cpu().latest()) + "%, average " + format(w.cpu().avg()) + "%");
+        if (w.cpuTemp().present()) {
+            lines.add("- CPU Temperature: latest " + format(w.cpuTemp().latest()) + " C");
+        }
+        lines.add("- RAM Usage: latest " + format(w.ram().latest()) + "%, average " + format(w.ram().avg()) + "%");
+        if (w.battery().present()) {
+            lines.add("- Battery Level: latest " + format(w.battery().latest()) + "%");
+        }
+        if (w.batteryRemaining().present()) {
+            lines.add("- Battery Time Remaining: " + format(w.batteryRemaining().latest()) + " min");
+        }
+        if (w.ssdHealth().present()) {
+            lines.add("- SSD Health: latest " + format(w.ssdHealth().latest()) + "%");
+        }
+        if (w.ssdWrites().present()) {
+            lines.add("- SSD Data Written (Total): +" + format(w.ssdWrites().delta()) + " GB over period");
+        }
+        if (w.storageFree().present()) {
+            lines.add("- Storage Free Space: " + format(w.storageFree().latest()) + " GB");
+        }
+        if (w.storageUsed().present()) {
+            lines.add("- Storage Usage: " + format(w.storageUsed().latest()) + "%");
+        }
+        if (w.netDown().present() || w.netUp().present()) {
+            lines.add("- Network Traffic: download avg " + format(w.netDown().avg())
+                    + " MB/s, upload avg " + format(w.netUp().avg()) + " MB/s");
+        }
+        if (w.signals().isEmpty()) {
+            lines.add("- Signals: no major long-term alert detected.");
+        } else {
+            lines.add("- Signals: " + String.join(", ", w.signals()));
+        }
+        return lines;
+    }
+
     private List<String> buildVerdictRecommendations(LongPeriodReport report) {
         List<String> recommendations = new ArrayList<>();
         WindowVerdict verdict = report.verdict();
 
+        addMetricRecommendations(recommendations, verdict, report.days());
+
+        boolean heavyWriteBehavior = report.behaviorInsights().stream()
+                .anyMatch(i -> i.type() == BehaviorSessionType.HEAVY_WRITE_ACTIVITY && i.count() > 0);
+        if (heavyWriteBehavior) {
+            recommendations.add("- Heavy write behavior was detected repeatedly; avoid unnecessary disk-intensive tasks.");
+        }
+
+        boolean frequentIdle = report.behaviorInsights().stream()
+                .anyMatch(i -> i.type() == BehaviorSessionType.IDLE && i.totalHours() >= 12.0);
+        if (frequentIdle) {
+            recommendations.add("- Device stays idle for long periods; enable sleep optimization to save energy.");
+        }
+
+        if (recommendations.isEmpty()) {
+            recommendations.add("- Continue current usage and keep long-period monitoring enabled.");
+        }
+
+        return recommendations;
+    }
+
+    private void addMetricRecommendations(List<String> recommendations, WindowVerdict verdict, int days) {
         if (verdict.ssdHealth().present() && verdict.ssdHealth().latest() <= monitoringProperties.ssdLowHealthPercentThreshold()) {
             recommendations.add("- Back up important files now and plan SSD replacement.");
         }
 
         if (verdict.ssdWrites().present()
-                && verdict.ssdWrites().delta() >= monitoringProperties.ssdHighWriteDeltaGbThreshold() * report.days()) {
+                && verdict.ssdWrites().delta() >= monitoringProperties.ssdHighWriteDeltaGbThreshold() * days) {
             recommendations.add("- Reduce heavy write workloads and keep regular backups enabled.");
         }
 
@@ -318,24 +352,6 @@ public class PeriodicMetricVerdictService {
         if (verdict.batteryRemaining().present() && verdict.batteryRemaining().latest() <= 30.0) {
             recommendations.add("- Battery time remaining is frequently low; reduce brightness/background load when unplugged.");
         }
-
-        boolean heavyWriteBehavior = report.behaviorInsights().stream()
-                .anyMatch(i -> i.type() == BehaviorSessionType.HEAVY_WRITE_ACTIVITY && i.count() > 0);
-        if (heavyWriteBehavior) {
-            recommendations.add("- Heavy write behavior was detected repeatedly; avoid unnecessary disk-intensive tasks.");
-        }
-
-        boolean frequentIdle = report.behaviorInsights().stream()
-                .anyMatch(i -> i.type() == BehaviorSessionType.IDLE && i.totalHours() >= 12.0);
-        if (frequentIdle) {
-            recommendations.add("- Device stays idle for long periods; enable sleep optimization to save energy.");
-        }
-
-        if (recommendations.isEmpty()) {
-            recommendations.add("- Continue current usage and keep long-period monitoring enabled.");
-        }
-
-        return recommendations;
     }
 
     private List<BehaviorInsight> buildBehaviorInsights(List<BehaviorSession> sessions, Instant now) {
@@ -481,6 +497,10 @@ public class PeriodicMetricVerdictService {
                                     List<BehaviorInsight> behaviorInsights) {
     }
 }
+
+
+
+
 
 
 

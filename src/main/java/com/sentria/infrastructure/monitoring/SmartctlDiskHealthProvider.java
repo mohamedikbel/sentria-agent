@@ -16,6 +16,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SmartctlDiskHealthProvider implements DiskHealthProvider {
 
+    private static final String NVME_HEALTH_LOG  = "nvme_smart_health_information_log";
+    private static final String ATTR_VALUE       = "value";
+    private static final String ATTR_TEMPERATURE = "temperature";
+
     private final SmartctlRunner smartctlRunner;
 
     @Override
@@ -66,39 +70,45 @@ public class SmartctlDiskHealthProvider implements DiskHealthProvider {
     }
 
     private Double extractHealth(JsonNode root) {
-        JsonNode nvme = root.path("nvme_smart_health_information_log");
+        JsonNode nvme = root.path(NVME_HEALTH_LOG);
         if (nvme.has("percentage_used")) {
             return Math.max(0.0, 100.0 - nvme.path("percentage_used").asDouble());
         }
 
         JsonNode ataTable = root.path("ata_smart_attributes").path("table");
         if (ataTable.isArray()) {
-            for (JsonNode row : ataTable) {
-                String name = row.path("name").asText("");
-                if ("Wear_Leveling_Count".equalsIgnoreCase(name)
-                        || "Media_Wearout_Indicator".equalsIgnoreCase(name)
-                        || "SSD_Life_Left".equalsIgnoreCase(name)
-                        || "Percent_Lifetime_Remain".equalsIgnoreCase(name)) {
-                    if (row.path("value").isNumber()) {
-                        return row.path("value").asDouble();
-                    }
-                    if (row.path("raw").path("value").isNumber()) {
-                        return row.path("raw").path("value").asDouble();
-                    }
-                }
-            }
+            return extractAtaHealthAttribute(ataTable);
         }
 
         return null;
     }
 
+    /** Scans the ATA attribute table for known wear/health attribute names. */
+    private Double extractAtaHealthAttribute(JsonNode ataTable) {
+        for (JsonNode row : ataTable) {
+            String name = row.path("name").asText("");
+            if ("Wear_Leveling_Count".equalsIgnoreCase(name)
+                    || "Media_Wearout_Indicator".equalsIgnoreCase(name)
+                    || "SSD_Life_Left".equalsIgnoreCase(name)
+                    || "Percent_Lifetime_Remain".equalsIgnoreCase(name)) {
+                if (row.path(ATTR_VALUE).isNumber()) {
+                    return row.path(ATTR_VALUE).asDouble();
+                }
+                if (row.path("raw").path(ATTR_VALUE).isNumber()) {
+                    return row.path("raw").path(ATTR_VALUE).asDouble();
+                }
+            }
+        }
+        return null;
+    }
+
     private Double extractTemperature(JsonNode root) {
-        JsonNode nvme = root.path("nvme_smart_health_information_log");
-        if (nvme.has("temperature")) {
-            return nvme.path("temperature").asDouble();
+        JsonNode nvme = root.path(NVME_HEALTH_LOG);
+        if (nvme.has(ATTR_TEMPERATURE)) {
+            return nvme.path(ATTR_TEMPERATURE).asDouble();
         }
 
-        JsonNode temp = root.path("temperature").path("current");
+        JsonNode temp = root.path(ATTR_TEMPERATURE).path("current");
         if (temp.isNumber()) {
             return temp.asDouble();
         }
@@ -107,7 +117,7 @@ public class SmartctlDiskHealthProvider implements DiskHealthProvider {
     }
 
     private Double extractWrittenGb(JsonNode root) {
-        JsonNode nvme = root.path("nvme_smart_health_information_log");
+        JsonNode nvme = root.path(NVME_HEALTH_LOG);
         if (nvme.has("data_units_written")) {
             double units = nvme.path("data_units_written").asDouble();
             return units * 512000.0 / 1_000_000_000.0;
@@ -118,8 +128,8 @@ public class SmartctlDiskHealthProvider implements DiskHealthProvider {
             for (JsonNode row : ataTable) {
                 String name = row.path("name").asText("");
                 if ("Total_LBAs_Written".equalsIgnoreCase(name)) {
-                    if (row.path("raw").path("value").isNumber()) {
-                        return row.path("raw").path("value").asDouble() * 512.0 / 1_000_000_000.0;
+                    if (row.path("raw").path(ATTR_VALUE).isNumber()) {
+                        return row.path("raw").path(ATTR_VALUE).asDouble() * 512.0 / 1_000_000_000.0;
                     }
                 }
             }

@@ -28,6 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class GlobalMetricsSummaryService {
 
+	private static final String PRIORITY_DEFAULT = "default";
+	private static final String SECTION_RECOMMENDATIONS = "Recommendations:";
+
 	private final MetricSnapshotStore metricSnapshotStore;
 	private final AiMetricsSummaryFormatter aiMetricsSummaryFormatter;
 	private final NotificationSender notificationSender;
@@ -49,7 +52,7 @@ public class GlobalMetricsSummaryService {
 			notificationSender.send(new FormattedNotification(
 					"Sentria Global State",
 					noDataBody,
-					"default"
+					PRIORITY_DEFAULT
 			));
 			log.info("Global summary sent with no recent metrics (window={}s)", lookbackSeconds);
 			return;
@@ -98,7 +101,7 @@ public class GlobalMetricsSummaryService {
 				"Signals:",
 				"- No reliable signal yet for this window.",
 				"",
-				"Recommendations:",
+				SECTION_RECOMMENDATIONS,
 				"- Keep the agent running; the next cycle will include full metrics."
 		);
 	}
@@ -164,7 +167,7 @@ public class GlobalMetricsSummaryService {
 		}
 
 		if (stats.isEmpty()) {
-			return new SummaryContext("", "default", List.of(), List.of());
+			return new SummaryContext("", PRIORITY_DEFAULT, List.of(), List.of());
 		}
 
 		List<String> highlights = buildHighlights(stats);
@@ -210,7 +213,7 @@ public class GlobalMetricsSummaryService {
 		}
 		lines.add("");
 
-		lines.add("Recommendations:");
+		lines.add(SECTION_RECOMMENDATIONS);
 		List<String> recommendations = buildRecommendations(summaryContext.stats());
 		recommendations.forEach(r -> lines.add("- " + r));
 
@@ -360,7 +363,7 @@ public class GlobalMetricsSummaryService {
 			return "high";
 		}
 
-		return "default";
+		return PRIORITY_DEFAULT;
 	}
 
 	private String format(double value) {
@@ -457,11 +460,11 @@ public class GlobalMetricsSummaryService {
 	}
 
 	private String appendRecommendation(String body, String recommendation) {
-		if (body.contains("Recommendations:")) {
+		if (body.contains(SECTION_RECOMMENDATIONS)) {
 			return body + "\n- " + recommendation;
 		}
 
-		return body + "\n\nRecommendations:\n- " + recommendation;
+		return body + "\n\n" + SECTION_RECOMMENDATIONS + "\n- " + recommendation;
 	}
 
 	private boolean hasSsdLowHealth(List<MetricStats> stats) {

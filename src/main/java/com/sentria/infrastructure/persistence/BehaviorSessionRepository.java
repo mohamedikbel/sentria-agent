@@ -14,6 +14,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BehaviorSessionRepository implements BehaviorSessionStore {
 
+    private static final String COL_ID           = "id";
+    private static final String COL_DEVICE_ID    = "device_id";
+    private static final String COL_SESSION_TYPE = "session_type";
+    private static final String COL_STARTED_AT   = "started_at";
+    private static final String COL_ENDED_AT     = "ended_at";
+    private static final String COL_CONTEXT      = "context";
+
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -54,12 +61,12 @@ public class BehaviorSessionRepository implements BehaviorSessionStore {
         List<BehaviorSession> results = jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new BehaviorSession(
-                        rs.getString("id"),
-                        rs.getString("device_id"),
-                        BehaviorSessionType.valueOf(rs.getString("session_type")),
-                        Instant.parse(rs.getString("started_at")),
-                        rs.getString("ended_at") != null ? Instant.parse(rs.getString("ended_at")) : null,
-                        rs.getString("context")
+                        rs.getString(COL_ID),
+                        rs.getString(COL_DEVICE_ID),
+                        BehaviorSessionType.valueOf(rs.getString(COL_SESSION_TYPE)),
+                        Instant.parse(rs.getString(COL_STARTED_AT)),
+                        rs.getString(COL_ENDED_AT) != null ? Instant.parse(rs.getString(COL_ENDED_AT)) : null,
+                        rs.getString(COL_CONTEXT)
                 ),
                 type.name()
         );
@@ -91,12 +98,12 @@ public class BehaviorSessionRepository implements BehaviorSessionStore {
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new BehaviorSession(
-                        rs.getString("id"),
-                        rs.getString("device_id"),
-                        BehaviorSessionType.valueOf(rs.getString("session_type")),
-                        Instant.parse(rs.getString("started_at")),
-                        rs.getString("ended_at") != null ? Instant.parse(rs.getString("ended_at")) : null,
-                        rs.getString("context")
+                        rs.getString(COL_ID),
+                        rs.getString(COL_DEVICE_ID),
+                        BehaviorSessionType.valueOf(rs.getString(COL_SESSION_TYPE)),
+                        Instant.parse(rs.getString(COL_STARTED_AT)),
+                        rs.getString(COL_ENDED_AT) != null ? Instant.parse(rs.getString(COL_ENDED_AT)) : null,
+                        rs.getString(COL_CONTEXT)
                 ),
                 type.name(),
                 since.toString()
@@ -115,12 +122,12 @@ public class BehaviorSessionRepository implements BehaviorSessionStore {
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new BehaviorSession(
-                        rs.getString("id"),
-                        rs.getString("device_id"),
-                        BehaviorSessionType.valueOf(rs.getString("session_type")),
-                        Instant.parse(rs.getString("started_at")),
-                        rs.getString("ended_at") != null ? Instant.parse(rs.getString("ended_at")) : null,
-                        rs.getString("context")
+                        rs.getString(COL_ID),
+                        rs.getString(COL_DEVICE_ID),
+                        BehaviorSessionType.valueOf(rs.getString(COL_SESSION_TYPE)),
+                        Instant.parse(rs.getString(COL_STARTED_AT)),
+                        rs.getString(COL_ENDED_AT) != null ? Instant.parse(rs.getString(COL_ENDED_AT)) : null,
+                        rs.getString(COL_CONTEXT)
                 ),
                 since.toString()
         );
