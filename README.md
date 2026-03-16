@@ -74,12 +74,12 @@
 ./mvnw.cmd clean package -DskipTests
 ```
 
-The JAR is output to `target/sentria-agent-0.0.1-SNAPSHOT.jar`.
+The JAR is output to `target/sentria-agent-1.0.0.jar`.
 
 ### 2 — Guided setup (recommended for first run)
 
 ```powershell
-java -jar target/sentria-agent-0.0.1-SNAPSHOT.jar --setup
+java -jar target/sentria-agent-1.0.0.jar --setup
 ```
 
 The wizard will ask you for:
@@ -96,7 +96,7 @@ Config is saved to **`~/.sentria/sentria-user.properties`** (stable across resta
 ### 3 — Run
 
 ```powershell
-java -jar target/sentria-agent-0.0.1-SNAPSHOT.jar
+java -jar target/sentria-agent-1.0.0.jar
 ```
 
 ---
@@ -249,8 +249,12 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "sentria": {
-      "url": "http://localhost:8080/mcp/sse",
-      "transport": "sse"
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "http://localhost:8080/mcp/sse"
+      ]
     }
   }
 }
@@ -399,4 +403,8 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 > **Sentria** — _Know your machine before it fails._
+
+
+
+
 

@@ -34,6 +34,11 @@ build/
 
 ### Runtime logs & temp data ###
 *.log
+*.log.*.gz
+*.gz
 identifier.sqlite
 data/
+
+### Dev scripts ###
+write_tests.py
 
