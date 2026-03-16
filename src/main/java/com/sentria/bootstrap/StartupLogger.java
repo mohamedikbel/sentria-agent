@@ -33,8 +33,8 @@ public class StartupLogger implements CommandLineRunner {
         log.info("Guided setup command: java -jar <your-jar>.jar --setup");
         log.info("Expected setup config file: {} (exists={})", setupConfigPath, Files.exists(setupConfigPath));
         log.info("Stable setup config file: {} (exists={})", homeSetupConfigPath, Files.exists(homeSetupConfigPath));
-        log.info("MCP server enabled by default. Suggested SSE URL: http://localhost:8080/sse");
-        log.info("MCP message endpoint is announced by SSE (example: /mcp/message)");
+        log.info("MCP server enabled by default. Suggested SSE URL: http://localhost:8080/mcp/sse");
+        log.info("MCP message endpoint is announced by SSE (example: /mcp/messages)");
         log.info("Monitoring enabled: {}, interval: {} seconds",
                 monitoringProperties.enabled(),
                 monitoringProperties.intervalSeconds());

@@ -41,8 +41,8 @@ public final class GuidedSetupCli {
         System.out.println("Global state report = short health snapshot every X minutes.");
         System.out.println("Periodic report = long-term trend analysis every X days (1/3/7/14/21/30).\n");
         System.out.println("MCP note: server is enabled by default.");
-        System.out.println("Suggested MCP SSE URL in clients: http://localhost:8080/sse");
-        System.out.println("Server sends MCP message endpoint automatically (example: /mcp/message).");
+        System.out.println("Suggested MCP SSE URL in clients: http://localhost:8080/mcp/sse");
+        System.out.println("Server sends MCP message endpoint automatically (example: /mcp/messages).");
         System.out.println("MCP docs: https://modelcontextprotocol.io\n");
         System.out.println();
 
@@ -179,8 +179,8 @@ public final class GuidedSetupCli {
         }
         System.out.println("Enabled monitoring collectors: " + String.join(", ", selectedCollectors));
         System.out.println("AI mode: " + (aiEnabled ? ("enabled (" + aiProvider + ", model=" + aiModel + ")") : "disabled (static mode)"));
-        System.out.println("MCP server: enabled by default. Use SSE URL: http://localhost:8080/sse");
-        System.out.println("MCP message endpoint is announced by the SSE stream (example: /mcp/message).");
+        System.out.println("MCP server: enabled by default. Use SSE URL: http://localhost:8080/mcp/sse");
+        System.out.println("MCP message endpoint is announced by the SSE stream (example: /mcp/messages).");
         System.out.println("Notification reminder: install ntfy mobile app then subscribe to topic '" + notifyTopic + "'.");
         System.out.println("If you set 2 minutes above, startup log should show: Global summary interval: 120 seconds.");
         if (launchAtStartup) {
@@ -421,8 +421,8 @@ public final class GuidedSetupCli {
         System.out.println();
         System.out.println("4) MCP integration");
         System.out.println("   - MCP server: enabled by default");
-        System.out.println("   - Suggested MCP SSE URL: http://localhost:8080/sse");
-        System.out.println("   - MCP message endpoint: announced by SSE (example: /mcp/message)");
+        System.out.println("   - Suggested MCP SSE URL: http://localhost:8080/mcp/sse");
+        System.out.println("   - MCP message endpoint: announced by SSE (example: /mcp/messages)");
         System.out.println("   - MCP docs: https://modelcontextprotocol.io");
         System.out.println();
         System.out.println("5) Start command");
@@ -527,6 +527,9 @@ public final class GuidedSetupCli {
         return models.get(choice - 1);
     }
 }
+
+
+
 
 
 
