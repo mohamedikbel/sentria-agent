@@ -260,6 +260,8 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
+> **Note:** `mcp-remote` will first probe for Streamable HTTP transport and log a `404` error — this is **expected**. Sentria uses SSE transport (Spring MVC), so `mcp-remote` automatically falls back to SSE and connects successfully. The proxy is established when you see `Proxy established successfully` in the output.
+
 ---
 
 ## 📊 Monitored Metrics
@@ -420,6 +422,7 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 > **Sentria** — _Know your machine before it fails._
+
 
 
 
